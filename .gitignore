@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+# build scratch
+.cache/
+dist/
+tmp/
+# netlify
+.netlify/
+# env — NEVER commit real keys
+.env
+.env.*
+!.env.example
+# os
+.DS_Store
+Thumbs.db
+# editor
+.vscode/
+.idea/

@@ -1,0 +1,30 @@
+# Netlify config — PUBLIC SITE (rokhbarz.com)
+# The admin app is a SEPARATE Netlify site; see docs/DEPLOY.md.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = ""
+
+[[redirects]]
+  from = "/admin"
+  to = "/404.html"
+  status = 404
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/maison/bundle.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/og-image.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

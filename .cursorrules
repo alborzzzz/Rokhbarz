@@ -1,0 +1,99 @@
+# Rokhbarz — project rules for Cursor
+
+You are working on **Rokhbarz**, a members' café and hi-fi vinyl listening room in Old
+Montreal (opening 2026). Dual brand: *Maison Coccinelle* (the space) and *Rokh Barz*
+(the voice). The aesthetic is old-world opulence, slightly decayed, deeply intentional —
+Persian-mythic, editorial, never generic.
+
+---
+
+## Non-negotiables
+
+1. **Never publish a street address.** The lease is NOT signed. Say "Old Montreal" /
+   "Vieux-Montréal" only. Do not add `streetAddress` or `postalCode` to schema.org data.
+   Do not add maps or directions. (Reverse this only when explicitly told the lease is signed.)
+2. **Everything user-facing is bilingual.** Any change to `public/index.html` must be
+   mirrored in `public/fr/index.html`. Same for the privacy and 404 pages. French is
+   Québec French, uses `’` (curly apostrophe) and a narrow non-breaking space before
+   `?` `!` `:` `;` (`&nbsp;`).
+3. **Contact email is `alborz@rokhbarz.com`.** Never `hello@`.
+4. **Never commit secrets.** Supabase URL/anon key and GA ID live in `window.__*__`
+   config blocks in HTML (anon key is safe to expose by design). The Resend API key
+   lives ONLY in Netlify environment variables — never in the repo.
+5. **`/admin` must never deploy with the public site.** It is a separate Netlify site.
+   Keep `robots.txt` disallowing it and keep `noindex` in its head.
+6. **No browser storage in artifacts/apps that run inside chat previews** — but in the
+   deployed site, `localStorage` IS used for the cookie-consent choice. That is correct.
+
+---
+
+## Design tokens (use these exact values — never invent new ones)
+
+```css
+--bg:#17102C;  --bg2:#1E1238;  --panel:#2A1B4A;  --panel2:#34245C;
+--gold:#C9A24B; --goldL:#E2C982; --bone:#EDE4D3; --lilac:#C8BAD6;
+--mute:#9385AC; --line:#4A3A6E; --paper:#F4ECDC; --ink:#241546; --inksoft:#5A4A7A;
+--rose:#B85C6E; --tulip:#A8434F; --leaf:#3d5340;
+--disp:'Cormorant Garamond',serif;   /* display / headings — weight 500/600, italic for emphasis */
+--ui:'Jost',sans-serif;              /* UI / body — weight 300/400 */
+--ease:cubic-bezier(.22,.61,.36,1);  --easeS:cubic-bezier(.6,.03,.24,1);
+```
+
+**Typographic rules**
+- Headings: Cormorant Garamond, 600, tight line-height (1.0–1.1). Emphasis via `<em>` in gold `--goldL`.
+- Eyebrows/labels: Jost, ~10–11px, `letter-spacing:.3em`, `text-transform:uppercase`, gold.
+- Body: Jost 300, 15–16.5px, `line-height:1.85`, colour `--lilac`, `max-width:~60ch`.
+- The wordmark **ROKHBARZ** is always uppercase with wide tracking (~.14em).
+
+**Visual rules**
+- Backgrounds use the marbled khatam texture already embedded in `public/index.html`
+  (`#160a26` + base64 tile, 520px, `background-attachment:fixed`). Do not replace it.
+- **No rounded corners on cards or panels.** Sharp edges. Pills (`border-radius:999px`)
+  are allowed only for small chips/buttons.
+- Structure comes from **thin gold hairlines**, whitespace, and the khatam mark —
+  not from boxes. Avoid heavy card containers; prefer a 1px `--line` border or a
+  left/bottom rule.
+- Motion: reveal on scroll (fade + 26px rise), staggered ~.07–.12s per item. Hover
+  lifts ~5–7px with a deepened shadow. Always honour `prefers-reduced-motion`.
+
+**Voice**
+- Confident, spare, literary. Short declaratives. No exclamation marks, no hype,
+  no "Discover…", no emoji.
+- Good: "Records are played in full." / "The beds are waking." / "This door doesn't open."
+- Bad: "Experience the ultimate coffee journey!"
+
+---
+
+## Architecture
+
+```
+public/          → deploys to rokhbarz.com  (Netlify site #1)
+  index.html       EN marketing site (single file, inline CSS+JS, base64 art)
+  fr/index.html    FR mirror
+  maison/          the interactive "walkable house" app (pre-built bundle.js)
+  privacy.html, fr/confidentialite.html, 404.html, fr/404.html
+  robots.txt, sitemap.xml, og-image.png
+netlify/functions/join.js   → serverless: join form → Resend email
+admin/           → deploys to admin.rokhbarz.com (Netlify site #2, SEPARATE)
+docs/            → schema.sql + setup guides (never deployed)
+src/             → source for the maison app, if/when un-bundled
+```
+
+**Important:** `public/maison/bundle.js` and `admin/bundle.js` are **pre-compiled**
+(esbuild, React inlined). They are build artifacts. If you need to change the maison
+or admin app, change the source and rebuild — do not hand-edit minified bundles.
+Root cause history: these were bundled because loading React/Babel from CDNs at runtime
+caused blank-screen failures when any CDN was blocked.
+
+## Data
+
+Supabase holds `items` (collections: coffee, food, vinyl, issues, prints, shop_vinyl,
+flowers, tiers) and `members`. RLS: public can read active items and insert members;
+only authenticated (the owner) can read members or write items. Schema in `docs/schema.sql`.
+
+## When making changes
+
+- Prefer surgical edits to the existing single-file HTML over restructuring it.
+- After any change to the public site, verify: no street address, EN and FR in sync,
+  no console errors, reduced-motion still respected.
+- Keep the pages self-contained — no new runtime CDN dependencies.

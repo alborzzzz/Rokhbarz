@@ -1,0 +1,13 @@
+# Netlify config — ADMIN SITE (admin.rokhbarz.com) — deploy as its OWN Netlify site
+# with base directory "admin". Never merge this into the public site.
+
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
